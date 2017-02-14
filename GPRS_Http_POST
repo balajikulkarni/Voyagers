@@ -52,7 +52,7 @@ if(started){
  
   delay(1000);
  
-  numdata=inet.httpPOST("www.posttestserver.com", 80, "/post.php.", "name=Marco&age=24",msg, 50);
+  numdata=inet.httpPOST("www.posttestserver.com", 80, "/post.php", "name=Marco&age=24",msg, 50);
  
 }
  
