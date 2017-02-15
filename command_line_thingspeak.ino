@@ -1,4 +1,3 @@
-//https://github.com/chandankumar1/temperature_logger
 #include <SoftwareSerial.h>
 #include <String.h>
  
