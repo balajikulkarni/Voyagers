@@ -1,1 +1,2 @@
-Repository for GSM+GPS Project
+Contians code developed for GSM+GPRS Project using Arduino.
+
