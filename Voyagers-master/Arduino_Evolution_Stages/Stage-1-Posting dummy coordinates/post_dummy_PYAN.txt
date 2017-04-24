@@ -1,0 +1,76 @@
+#include "SIM900.h"
+#include "Phant.h"
+#include <SoftwareSerial.h>
+ 
+#include "inetGSM.h"
+ 
+InetGSM inet;
+ 
+int k=0;
+ 
+int j=0;
+ 
+char msg[150];
+char buff[100];
+ 
+boolean found=false;
+ 
+char data;
+ 
+int numdata;
+ 
+char inSerial[50];
+ 
+int i=0;
+ 
+boolean started=false;
+ 
+void setup()
+ 
+{
+ 
+Serial.begin(9600);
+ 
+Serial.println("GSM Shield testing.");
+ 
+if (gsm.begin(2400)){
+ 
+  Serial.println("\nstatus=READY");
+ 
+  started=true;  
+ 
+}
+ 
+else Serial.println("\nstatus=IDLE");
+ 
+if(started){
+ 
+  if (inet.attachGPRS("airtelgprs.com", "", ""))
+ 
+    Serial.println("status=ATTACHED");
+ 
+  else Serial.println("status=ERROR");//inet.httpPOST("www.evildeejay.it", 80,"/test/test.php", "name=Marco&age=24",msg, 50);
+ 
+  delay(1000);//voyagers.pythonanywhere.com/senddata?node=Alpha&lat=10.4&lng=10.5
+ 
+ 
+ numdata=inet.httpPOST("voyagers.pythonanywhere.com", 80, "/senddata?node=Balaji&lat=15.2&lng=16.1", buff,msg, 50);
+ 
+ //inet.httpPOST("www.evildeejay.it", 80,"/test/test.php", "name=Marco&age=24",msg, 50);
+}
+ 
+};
+ 
+void loop()
+ 
+{
+ 
+serialswread();
+ 
+};
+ 
+void serialswread(){
+ 
+gsm.SimpleRead();
+ 
+}
