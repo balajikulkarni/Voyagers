@@ -1,8 +1,0 @@
-Three parameters can be sent currently.
-
-http://voyagers.pythonanywhere.com/senddata?<node>=<node_name>&<lat>=<latitude>&<lng>=<longitude>
-
-Insert node_name , latitude , longitude before making POST from Arduino.
-
-Ex:
-http://voyagers.pythonanywhere.com/senddata?node=Alpha&lat=10.4&lng=10.5
