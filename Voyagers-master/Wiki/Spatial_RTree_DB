@@ -5,3 +5,7 @@ http://www.gaia-gis.it/gaia-sins/spatialite-cookbook/html/rtree.html
 http://stackoverflow.com/questions/43559583/fetch-coordinates-of-users-within-certain-distance-using-sqlite3
 
 http://stackoverflow.com/questions/3695224/sqlite-getting-nearest-locations-with-latitude-and-longitude
+
+
+Math behind finding coordinates within given radius:
+http://janmatuschek.de/LatitudeLongitudeBoundingCoordinates#UsingIndex
