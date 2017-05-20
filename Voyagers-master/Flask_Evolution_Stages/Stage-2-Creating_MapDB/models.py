@@ -2,17 +2,8 @@ import sqlite3 as sql
 import math
 from geopy.geocoders import Nominatim
 
-
-node = 'NodeName'         #Store NodeName
-latitude  = 'Latitude'     #Store Latitude
-longitude = 'Longitude'    #Store Longitude
-timestamp = 'Timestamp'    #Store Timestamp
-pincode = 'Pincode'        #Pincode
-text_type = 'TEXT'
-real_type = 'REAL'
-int_type = 'INT'
-time_type = 'TIMESTAMP'
-
+#Required to perform radius calculation (KMs)
+EARTH_RADIUS = 6378.1
 
 class LocateMe:
 
@@ -23,8 +14,11 @@ class LocateMe:
     MIN_LON = math.radians(-180)
     MAX_LON = math.radians(180)
 
-    #Required to perform distance calculation (kms)
-    EARTH_RADIUS = 6378.1
+    @classmethod
+    def convert_to_radians(cls,deg_lat,deg_lon):
+        rad_lat = math.radians(deg_lat)
+        rad_lon = math.radians(deg_lon)
+        return (rad_lat,rad_lon)
 
     @classmethod
     def from_degrees(cls, deg_lat, deg_lon):
@@ -93,7 +87,7 @@ def Create_DB(sqlite_file,table):
         con = sql.connect(sqlite_file)
         with con:
             c = con.cursor()
-            c.execute('CREATE VIRTUAL TABLE IF NOT EXISTS {tn} USING rtree(NODE_ID,MIN_LATITUDE,MIN_LONGITUDE,MAX_LATITUDE,MAX_LONGITUDE)'
+            c.execute('CREATE VIRTUAL TABLE IF NOT EXISTS {tn} USING rtree(NODE_ID,LATITUDE,LONGITUDE)'
                       .format(tn=table))
             con.commit()
             c.close()
@@ -109,7 +103,7 @@ def InsertInto_DB(sqlite_file,table,data):
         con = sql.connect(sqlite_file)
         with con:
             c = con.cursor()
-            c.execute('INSERT INTO {} VALUES (?,?,?,?,?)'.format(table),(data))
+            c.execute('INSERT INTO {} VALUES (?,?,?)'.format(table),(data))
             con.commit()
             c.close()
         con.close()
@@ -118,3 +112,28 @@ def InsertInto_DB(sqlite_file,table,data):
         if con:
             con.rollback()
         return ('Rolling back DB.Table Insertion Failed.')
+
+
+def SelectFrom_DB(sqlite_file,table,lat,lng,boundaries,distance):
+    radius = distance / EARTH_RADIUS
+    try:
+        con = sql.connect(sqlite_file)
+        with con:
+            c = con.cursor()
+            c.execute('SELECT * FROM {} WHERE \
+                          ((LATITUDE => {lt_min}  AND LATITUDE <= {lt_max}) AND (LONGITUDE >= {lg_min} AND LONGITUDE <= {lg_min})) \
+					  AND \
+					      (acos(sin({lt}) * sin(LATITUDE) + cos({lt}) * cos(LATITUDE) * cos(LONGITUDE-(-{lng}))) <={dist})'
+					  .format(table,lt=lat,lt_min=boundaries[0],
+					          lt_max=boundaries[1],lg=lng,lg_min=boundaries[2],
+					          lg_max=boundaries[3],dist=radius))
+            results = c.fetchall()
+    except Exception:
+        return ('Error Querying Database.')
+    try:
+        #For now save results to a text file
+        with open('NearBy.txt', 'a') as f:
+            for row in results:
+                f.write("%s\n" % str(row))
+    except Exception:
+        return ('Error writing to NearBy File.')
