@@ -1,5 +1,4 @@
-# Voyagers
+# Sharing Real Time location using Arduino over GPRS
 
-For the safety of society , we connect.
+Arduino Uno IoT node to share user-location over GPRS connection to server instance running on Pythonanywhere.com
 
-More Description Coming Soon!
