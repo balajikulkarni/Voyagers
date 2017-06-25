@@ -1,0 +1,118 @@
+#include<SoftwareSerial.h>
+
+/* GSM headers */
+#include "SIM900.h"
+#include "Phant.h"
+#include "inetGSM.h"
+
+
+
+#define RxPin_GPRSArduino  2
+#define TxPin_GPRSArduino  3
+#define RxPin_GPSArduino 4
+#define TxPin_GPSArduino 5
+#define PushButtonPin_Arduino 13
+  
+/* GSM Initialization */
+InetGSM inet;
+char msg[100];
+char buff[100];
+boolean started = false;
+int numdata;
+
+/* Initialize the GPS String Array */
+char GPS_GLL[100]="";
+char *Check_Charactor = "$GPGLL";  /* NMEA string holding the Latitude and Longitude info */
+int GLL_Index=0;
+int CheckStrg_Index=0; /* index to loop through the check string */
+boolean UserButtonPressed_bo = false;
+boolean StringFound_bo = false;
+  
+/* Configure Tx and Rx of the GPS connection*/
+SoftwareSerial gps = SoftwareSerial(RxPin_GPSArduino, TxPin_GPSArduino);
+
+void setup(){
+/* Set up the serial Monitor Baud Rate */
+Serial.begin(9600);
+/* wait till the communication is set up */
+while(!Serial);
+                   
+/* Set up the GPS communication Baud Rate 
+   Baud Rates will change based on the GPS types used
+   The below Baud rate is applicable for the Neo -6M GPS Module */
+//Serial.print("Stage-1");
+gps.begin(9600);
+/* Initialize the Internal Pull-Ups for the Pushbutton digital input to avoid unnecessary voltage fluctuations
+   Caution : Don't provide voltages below ground or voltage above the positive voltage reference of the Arduino Board(5V/3.3 V) */
+pinMode(PushButtonPin_Arduino, INPUT_PULLUP);
+
+delay(1000);
+}
+  
+void loop() {
+/* Here two scenarios can happen :
+1. User button press time is greater than the loop() function execution time, this will result in continous LOW read for multiple times(more than one loop() functions called during User press)
+   and thus the GPS data may get repeated.
+2. User button press time is less than Loop() function single runtime, in that manner it should be able to read only once.
+
+An alternative approach here could be setting the User Input as Interrupt Input onn Falling edge of the Voltage pulse due to the User Button Press */
+if(HIGH == digitalRead(PushButtonPin_Arduino)){ /* Detect a button press */
+/* The GPS data read should be started however the button will be pressed only once, so the gps reading should be done from hereon continuously even 
+   if the button is now OFF */
+   UserButtonPressed_bo = true;
+}
+
+if(true == UserButtonPressed_bo)
+{
+ if(gps.available()){/* Check GPS availability */ 
+    GPS_GLL[GLL_Index] = gps.read();
+    if(false == StringFound_bo){
+      if((Check_Charactor[CheckStrg_Index] != '\0') && (GPS_GLL[GLL_Index] == Check_Charactor[CheckStrg_Index]))
+      {
+        CheckStrg_Index++;
+        GLL_Index++;
+      }
+      else
+      {
+        if(Check_Charactor[CheckStrg_Index] != '\0')
+        {
+           GLL_Index=0;
+           CheckStrg_Index=0;
+        }
+        else 
+        {
+          if(Check_Charactor[CheckStrg_Index] == '\0')
+          {/* The requested string is received */
+            CheckStrg_Index=0;   
+            GLL_Index=0;
+            StringFound_bo = true;
+          }
+        }
+      }
+    }
+    else
+    {
+      /* Now parse the String requested */
+      if(GPS_GLL[GLL_Index] == 'E')
+      {/* Latitude and Longitude Extracted, Send the data to GSM*/
+        Serial.write(GPS_GLL);
+        Serial.println('\n');
+        StringFound_bo = false;
+        
+  /* Uploading GPS data to cloud via GSM */    
+       //numdata = inet.httpPOST("voyagers.pythonanywhere.com", 80, GPS_GLL, buff, msg, 50);
+/* TODO : Add the GSM code here 
+   UserButtonPressed_bo Should be set to false as soon as the GPS data is sent to the cloud to not to allow continuous GPS uploading
+   until next time the button is pressed 
+   A Power Saver functionality can be added here */
+        UserButtonPressed_bo = false;
+        GLL_Index=0;
+      }
+      else
+      {
+        GLL_Index++;
+      }
+    }
+}
+}
+}
